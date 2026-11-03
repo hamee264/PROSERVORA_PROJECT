@@ -1,5 +1,5 @@
-import { lazy, Suspense } from "react";
-import { Routes, Route } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 
 import PublicLayout from "../layouts/PublicLayout/PublicLayout.jsx";
 import ClientLayout from "../layouts/ClientLayout/ClientLayout.jsx";
@@ -40,9 +40,20 @@ const RouteLoading = () => (
   </div>
 );
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname]);
+
+  return null;
+}
+
 function AppRoutes() {
   return (
     <Suspense fallback={<RouteLoading />}>
+      <ScrollToTop />
       <Routes>
         {/* PUBLIC */}
         <Route element={<PublicLayout />}>
