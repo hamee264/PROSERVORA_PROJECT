@@ -1,0 +1,103 @@
+:root {
+  /* =========================
+     PROSERVORA BRAND
+  ========================= */
+
+  --color-deep-emerald: #12352b;
+  --color-brand-green: #287a55;
+  --color-soft-green: #b8d9a8;
+
+  --color-ivory: #f7f6f0;
+  --color-white: #ffffff;
+
+  /* =========================
+     TEXT
+  ========================= */
+
+  --color-text: #17201b;
+  --color-text-secondary: #4f5b54;
+  --color-text-muted: #68736d;
+  --color-text-light: #8b948e;
+
+  /* =========================
+     BORDERS
+  ========================= */
+
+  --color-border: #dfe4df;
+  --color-border-light: #e9ece8;
+  --color-border-dark: #cbd3cd;
+
+  /* =========================
+     SEMANTIC
+  ========================= */
+
+  --color-success: #287a55;
+  --color-success-soft: #e6f1e9;
+
+  --color-warning: #b7791f;
+  --color-warning-soft: #fff4dc;
+
+  --color-error: #c0392b;
+  --color-error-soft: #fbe9e7;
+
+  --color-info: #3568a8;
+  --color-info-soft: #e8f0fa;
+
+  /* =========================
+     TYPOGRAPHY
+  ========================= */
+
+  --font-sans:
+    Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+
+  /* =========================
+     SPACING
+  ========================= */
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* =========================
+     RADIUS
+  ========================= */
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 999px;
+
+  /* =========================
+     SHADOWS
+  ========================= */
+
+  --shadow-sm: 0 2px 8px rgba(18, 53, 43, 0.06);
+  --shadow-md: 0 8px 24px rgba(18, 53, 43, 0.08);
+  --shadow-lg: 0 16px 40px rgba(18, 53, 43, 0.12);
+
+  /* =========================
+     LAYOUT
+  ========================= */
+
+  --container-width: 1200px;
+  --navbar-height: 76px;
+
+  /* =========================
+     MOTION
+  ========================= */
+
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 400ms ease;
+}

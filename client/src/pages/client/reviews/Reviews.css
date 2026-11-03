@@ -1,0 +1,8 @@
+.client-reviews {
+  padding-block: 32px;
+}
+
+.client-reviews h1 {
+  color: var(--color-deep-emerald);
+  font-size: 28px;
+}

@@ -1,0 +1,297 @@
+.value-section {
+  background: var(--color-ivory);
+}
+
+.value-section__container {
+  width: min(calc(100% - 48px), var(--container-width));
+
+  min-height: 560px;
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1.05fr)
+    minmax(360px, 0.95fr);
+
+  align-items: center;
+
+  gap: 100px;
+
+  padding: 96px 0;
+}
+
+/* =========================================
+   LEFT CONTENT
+========================================= */
+
+.value-section__content {
+  max-width: 600px;
+}
+
+.value-section__eyebrow {
+  display: block;
+
+  margin-bottom: 18px;
+
+  color: var(--color-brand-green);
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.1em;
+
+  text-transform: uppercase;
+}
+
+.value-section__content h2 {
+  color: var(--color-deep-emerald);
+
+  font-size: clamp(40px, 4.2vw, 60px);
+
+  font-weight: 650;
+
+  line-height: 1.02;
+
+  letter-spacing: -0.045em;
+}
+
+.value-section__content h2 span {
+  display: block;
+
+  color: var(--color-brand-green);
+}
+
+.value-section__content > p {
+  max-width: 540px;
+
+  margin-top: 28px;
+
+  color: var(--color-text-secondary);
+
+  font-size: 15px;
+
+  line-height: 1.75;
+}
+
+/* =========================================
+   PRINCIPLES
+========================================= */
+
+.value-section__principles {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 30px;
+
+  margin-top: 42px;
+
+  padding-top: 26px;
+
+  border-top: 1px solid var(--color-border);
+}
+
+.value-section__principles div {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+.value-section__principles strong {
+  color: var(--color-deep-emerald);
+
+  font-size: 12px;
+
+  font-weight: 700;
+}
+
+.value-section__principles span {
+  color: var(--color-text-muted);
+
+  font-size: 11px;
+
+  line-height: 1.5;
+}
+
+/* =========================================
+   FEATURES
+========================================= */
+
+.value-section__features {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 18px;
+}
+
+.value-feature {
+  display: grid;
+
+  grid-template-columns: 62px 1fr;
+
+  gap: 20px;
+
+  padding: 22px 0;
+
+  border-bottom: 1px solid var(--color-border);
+}
+
+.value-feature:first-child {
+  padding-top: 0;
+}
+
+.value-feature:last-child {
+  padding-bottom: 0;
+
+  border-bottom: 0;
+}
+
+/* =========================================
+   FEATURE ICON
+========================================= */
+
+.value-feature__icon {
+  width: 62px;
+
+  height: 62px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: var(--color-white);
+
+  color: var(--color-brand-green);
+
+  box-shadow: var(--shadow-sm);
+}
+
+/* =========================================
+   FEATURE CONTENT
+========================================= */
+
+.value-feature__content {
+  padding-top: 2px;
+}
+
+.value-feature__content h3 {
+  color: var(--color-deep-emerald);
+
+  font-size: 20px;
+
+  font-weight: 650;
+
+  line-height: 1.25;
+
+  letter-spacing: -0.02em;
+}
+
+.value-feature__content p {
+  max-width: 390px;
+
+  margin-top: 8px;
+
+  color: var(--color-text-muted);
+
+  font-size: 13px;
+
+  line-height: 1.65;
+}
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 900px) {
+  .value-section__container {
+    grid-template-columns: 1fr;
+
+    gap: 64px;
+
+    padding: 80px 0;
+  }
+
+  .value-section__content {
+    max-width: 680px;
+  }
+
+  .value-section__features {
+    max-width: 680px;
+  }
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 600px) {
+  .value-section__container {
+    width: calc(100% - 32px);
+
+    gap: 48px;
+
+    padding: 64px 0;
+  }
+
+  .value-section__content h2 {
+    font-size: 39px;
+  }
+
+  .value-section__content > p {
+    margin-top: 22px;
+
+    font-size: 14px;
+  }
+
+  .value-section__principles {
+    grid-template-columns: 1fr;
+
+    gap: 18px;
+
+    margin-top: 32px;
+  }
+
+  .value-feature {
+    grid-template-columns: 50px 1fr;
+
+    gap: 16px;
+
+    padding: 18px 0;
+  }
+
+  .value-feature__icon {
+    width: 50px;
+
+    height: 50px;
+  }
+
+  .value-feature__content h3 {
+    font-size: 17px;
+  }
+
+  .value-feature__content p {
+    font-size: 12px;
+  }
+}
+
+/* =========================================
+   VERY SMALL PHONES
+========================================= */
+
+@media (max-width: 380px) {
+  .value-section__container {
+    width: calc(100% - 24px);
+  }
+
+  .value-section__content h2 {
+    font-size: 34px;
+  }
+}

@@ -1,0 +1,474 @@
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  width: 100%;
+
+  background: rgba(247, 246, 240, 0.94);
+
+  border-bottom: 1px solid var(--color-border);
+
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* =========================================
+   CONTAINER
+========================================= */
+
+.navbar__container {
+  position: relative;
+
+  width: min(calc(100% - 48px), var(--container-width));
+  height: 74px;
+
+  margin: 0 auto;
+
+  display: flex;
+  align-items: center;
+}
+
+/* =========================================
+   BRAND
+========================================= */
+
+.navbar__brand {
+  width: 46px;
+  height: 46px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  transition:
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.navbar__brand:hover {
+  opacity: 0.86;
+}
+
+.navbar__brand:active {
+  transform: scale(0.96);
+}
+
+/* =========================================
+   DESKTOP NAVIGATION
+========================================= */
+
+.navbar__desktop-nav {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  align-items: center;
+
+  gap: 30px;
+
+  white-space: nowrap;
+}
+
+.navbar__link {
+  position: relative;
+
+  padding: 8px 0;
+
+  color: var(--color-text-secondary);
+
+  font-size: 13px;
+  font-weight: 550;
+
+  transition: color var(--transition-fast);
+}
+
+.navbar__link:hover {
+  color: var(--color-deep-emerald);
+}
+
+.navbar__link.active {
+  color: var(--color-deep-emerald);
+}
+
+.navbar__link.active::after {
+  content: "";
+
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+
+  width: 4px;
+  height: 4px;
+
+  border-radius: 50%;
+
+  background: var(--color-brand-green);
+
+  transform: translateX(-50%);
+}
+
+/* =========================================
+   DESKTOP ACTIONS
+========================================= */
+
+.navbar__actions {
+  margin-left: auto;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+}
+
+.navbar__login {
+  min-height: 40px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 16px;
+
+  border: 1px solid var(--color-border-dark);
+
+  background: transparent;
+
+  color: var(--color-deep-emerald);
+
+  font-size: 12px;
+  font-weight: 650;
+
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.navbar__login:hover {
+  background: var(--color-soft-green);
+  border-color: var(--color-brand-green);
+}
+
+.navbar__actions .proservora-button {
+  min-width: 116px;
+  min-height: 40px;
+
+  padding: 10px 16px;
+
+  font-size: 10px;
+}
+
+/* =========================================
+   MOBILE BUTTON
+========================================= */
+
+.navbar__menu-button {
+  display: none;
+
+  width: 42px;
+  height: 42px;
+
+  margin-left: auto;
+
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid var(--color-border);
+
+  background: var(--color-white);
+
+  color: var(--color-deep-emerald);
+
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.navbar__menu-button:hover,
+.navbar__menu-button.is-open {
+  background: var(--color-soft-green);
+  border-color: var(--color-brand-green);
+}
+
+.navbar__menu-button:active {
+  transform: scale(0.96);
+}
+
+/* =========================================
+   MOBILE MENU
+========================================= */
+
+/*
+  IMPORTANT:
+  This is absolute so opening the menu does
+  NOT push the page content downward.
+*/
+
+.navbar__mobile-menu {
+  position: absolute;
+
+  top: calc(100% + 1px);
+  left: 0;
+  right: 0;
+
+  z-index: 999;
+
+  padding: 0 16px 16px;
+
+  pointer-events: none;
+}
+
+.navbar__mobile-nav {
+  width: min(100%, 520px);
+
+  margin-left: auto;
+
+  overflow: hidden;
+
+  pointer-events: auto;
+
+  background: var(--color-white);
+
+  border: 1px solid var(--color-border);
+
+  box-shadow: var(--shadow-lg);
+}
+
+/* =========================================
+   MOBILE LINKS
+========================================= */
+
+.navbar__mobile-links {
+  padding: 4px 18px;
+}
+
+.navbar__mobile-link {
+  min-height: 58px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom: 1px solid var(--color-border-light);
+
+  color: var(--color-text);
+
+  font-size: 14px;
+  font-weight: 550;
+
+  transition:
+    color var(--transition-fast),
+    padding-left var(--transition-fast);
+}
+
+.navbar__mobile-link:last-child {
+  border-bottom: 0;
+}
+
+.navbar__mobile-link:hover,
+.navbar__mobile-link.active {
+  color: var(--color-brand-green);
+  padding-left: 4px;
+}
+
+.navbar__mobile-index {
+  color: var(--color-text-light);
+
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.navbar__mobile-link.active .navbar__mobile-index {
+  color: var(--color-brand-green);
+}
+
+/* =========================================
+   MOBILE ACTIONS
+========================================= */
+
+.navbar__mobile-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  gap: 10px;
+
+  padding: 16px;
+
+  background: var(--color-ivory);
+
+  border-top: 1px solid var(--color-border-light);
+}
+
+.navbar__mobile-login {
+  min-height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid var(--color-deep-emerald);
+
+  background: var(--color-white);
+
+  color: var(--color-deep-emerald);
+
+  font-size: 13px;
+  font-weight: 650;
+
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.navbar__mobile-login:hover {
+  background: var(--color-soft-green);
+  border-color: var(--color-brand-green);
+}
+
+.navbar__mobile-cta {
+  width: 100%;
+  min-height: 46px;
+
+  padding: 0 10px !important;
+}
+
+/* =========================================
+   COMPACT DESKTOP
+========================================= */
+
+@media (max-width: 1120px) {
+  .navbar__container {
+    width: min(calc(100% - 40px), var(--container-width));
+  }
+
+  .navbar__desktop-nav {
+    gap: 20px;
+  }
+
+  .navbar__link {
+    font-size: 12px;
+  }
+
+  .navbar__actions {
+    gap: 8px;
+  }
+
+  .navbar__login {
+    padding: 0 12px;
+  }
+
+  .navbar__actions .proservora-button {
+    min-width: 104px;
+    padding: 9px 13px;
+  }
+}
+
+/* =========================================
+   MOBILE / TABLET
+========================================= */
+
+@media (max-width: 920px) {
+  .navbar__desktop-nav,
+  .navbar__actions {
+    display: none;
+  }
+
+  .navbar__menu-button {
+    display: flex;
+  }
+
+  .navbar__container {
+    width: min(calc(100% - 40px), var(--container-width));
+    height: 68px;
+  }
+
+  .navbar__mobile-menu {
+    display: block;
+  }
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 600px) {
+  .navbar__container {
+    width: calc(100% - 32px);
+    height: 64px;
+  }
+
+  .navbar__brand {
+    width: 40px;
+    height: 40px;
+  }
+
+  .navbar__menu-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .navbar__mobile-menu {
+    padding: 0 12px 12px;
+  }
+
+  .navbar__mobile-links {
+    padding: 3px 16px;
+  }
+
+  .navbar__mobile-actions {
+    padding: 14px;
+  }
+}
+
+/* =========================================
+   VERY SMALL PHONES
+========================================= */
+
+@media (max-width: 380px) {
+  .navbar__container {
+    width: calc(100% - 24px);
+    height: 60px;
+  }
+
+  .navbar__brand {
+    width: 38px;
+    height: 38px;
+  }
+
+  .navbar__menu-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .navbar__mobile-menu {
+    padding: 0 8px 8px;
+  }
+
+  .navbar__mobile-actions {
+    grid-template-columns: 1fr;
+
+    gap: 8px;
+  }
+}
+
+/* =========================================
+   REDUCED MOTION
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .navbar__link,
+  .navbar__login,
+  .navbar__menu-button,
+  .navbar__mobile-link,
+  .navbar__mobile-login {
+    transition: none;
+  }
+}

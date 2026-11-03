@@ -1,0 +1,73 @@
+.provider-bookings .client-bookings__header {
+  padding-bottom: 26px;
+}
+
+.provider-bookings .client-bookings__header p {
+  max-width: 620px;
+}
+
+.provider-bookings .client-bookings__item {
+  position: relative;
+  padding: 25px 16px;
+  border-left: 3px solid transparent;
+  background: var(--color-white);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.provider-bookings .client-bookings__item:hover {
+  background: var(--color-ivory);
+}
+
+.provider-bookings .client-bookings__item:not(.provider-bookings__item--completed):has(.client-bookings__status--pending) {
+  border-left-color: var(--color-warning);
+}
+
+.provider-bookings .client-bookings__item:not(.provider-bookings__item--completed):has(.client-bookings__status--accepted) {
+  border-left-color: var(--color-info);
+}
+
+.provider-bookings .client-bookings__item:not(.provider-bookings__item--completed):has(.client-bookings__status--in_progress) {
+  border-left-color: var(--color-brand-green);
+}
+
+.provider-bookings .client-bookings__item--completed {
+  border: 1px solid #cfe5d4;
+  border-left: 3px solid var(--color-success);
+  background: #f7fbf8;
+}
+
+.provider-bookings .client-bookings__item--completed:hover {
+  background: #f1f9f3;
+}
+
+.provider-bookings__no-action {
+  margin-top: 15px;
+  color: var(--color-success);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.provider-bookings .client-bookings__primary-action {
+  border-color: var(--color-deep-emerald);
+  background: var(--color-deep-emerald);
+}
+
+.provider-bookings .client-bookings__primary-action:hover:not(:disabled) {
+  border-color: var(--color-brand-green);
+  background: var(--color-brand-green);
+}
+
+.provider-bookings .client-bookings__secondary-action:hover:not(:disabled) {
+  border-color: var(--color-deep-emerald);
+  background: var(--color-success-soft);
+  color: var(--color-deep-emerald);
+}
+
+.provider-bookings .client-bookings__primary-action:disabled {
+  border-color: var(--color-border);
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}

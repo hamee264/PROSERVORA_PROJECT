@@ -1,0 +1,291 @@
+.trust-section {
+  background: var(--color-soft-green);
+}
+
+.trust-section__container {
+  width: min(calc(100% - 48px), var(--container-width));
+
+  margin: 0 auto;
+
+  padding: 104px 0;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 0.9fr)
+    minmax(0, 1.1fr);
+
+  gap: 90px;
+
+  align-items: center;
+}
+
+/* =========================================
+   LEFT CONTENT
+========================================= */
+
+.trust-section__content {
+  max-width: 520px;
+}
+
+.trust-section__eyebrow {
+  display: block;
+
+  margin-bottom: 14px;
+
+  color: var(--color-brand-green);
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.1em;
+
+  text-transform: uppercase;
+}
+
+.trust-section__content h2 {
+  margin-bottom: 22px;
+
+  color: var(--color-deep-emerald);
+
+  font-size: clamp(38px, 4vw, 58px);
+
+  font-weight: 600;
+
+  line-height: 1.02;
+
+  letter-spacing: -0.045em;
+}
+
+.trust-section__content h2 span {
+  display: block;
+
+  color: var(--color-brand-green);
+}
+
+.trust-section__content > p {
+  max-width: 470px;
+
+  margin-bottom: 34px;
+
+  color: var(--color-text-secondary);
+
+  font-size: 14px;
+
+  line-height: 1.75;
+}
+
+/* =========================================
+   HIGHLIGHT
+========================================= */
+
+.trust-section__highlight {
+  display: grid;
+
+  grid-template-columns: 48px 1fr;
+
+  gap: 16px;
+
+  padding: 20px;
+
+  background: var(--color-white);
+
+  border: 1px solid rgba(18, 53, 43, 0.08);
+}
+
+.trust-section__highlight-icon {
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background: var(--color-deep-emerald);
+
+  color: var(--color-soft-green);
+}
+
+.trust-section__highlight strong {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: var(--color-deep-emerald);
+
+  font-size: 13px;
+
+  font-weight: 700;
+}
+
+.trust-section__highlight span {
+  display: block;
+
+  color: var(--color-text-muted);
+
+  font-size: 11px;
+
+  line-height: 1.6;
+}
+
+/* =========================================
+   FEATURES
+========================================= */
+
+.trust-section__features {
+  display: flex;
+
+  flex-direction: column;
+
+  background: var(--color-white);
+
+  border: 1px solid var(--color-border);
+}
+
+.trust-feature {
+  display: grid;
+
+  grid-template-columns: 48px 1fr;
+
+  gap: 18px;
+
+  padding: 30px;
+
+  border-bottom: 1px solid var(--color-border);
+}
+
+.trust-feature:last-child {
+  border-bottom: 0;
+}
+
+.trust-feature__icon {
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background: var(--color-success-soft);
+
+  color: var(--color-brand-green);
+}
+
+.trust-feature__number {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: var(--color-text-light);
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.08em;
+}
+
+.trust-feature h3 {
+  margin-bottom: 7px;
+
+  color: var(--color-deep-emerald);
+
+  font-size: 16px;
+
+  font-weight: 650;
+}
+
+.trust-feature p {
+  max-width: 520px;
+
+  color: var(--color-text-secondary);
+
+  font-size: 12px;
+
+  line-height: 1.65;
+}
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 900px) {
+  .trust-section__container {
+    grid-template-columns: 1fr;
+
+    gap: 48px;
+
+    padding: 80px 0;
+  }
+
+  .trust-section__content {
+    max-width: 680px;
+  }
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 620px) {
+  .trust-section__container {
+    width: calc(100% - 32px);
+
+    gap: 34px;
+
+    padding: 68px 0;
+  }
+
+  .trust-section__content h2 {
+    font-size: 36px;
+  }
+
+  .trust-section__content > p {
+    font-size: 13px;
+  }
+
+  .trust-section__highlight {
+    grid-template-columns: 40px 1fr;
+
+    padding: 16px;
+  }
+
+  .trust-section__highlight-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .trust-feature {
+    grid-template-columns: 40px 1fr;
+
+    gap: 14px;
+
+    padding: 22px;
+  }
+
+  .trust-feature__icon {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* =========================================
+   SMALL MOBILE
+========================================= */
+
+@media (max-width: 380px) {
+  .trust-section__container {
+    width: calc(100% - 24px);
+  }
+
+  .trust-section__content h2 {
+    font-size: 32px;
+  }
+
+  .trust-feature {
+    padding: 18px;
+  }
+}

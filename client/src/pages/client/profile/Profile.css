@@ -1,0 +1,401 @@
+.client-profile {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.client-profile__header {
+  padding: 8px 0 28px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.client-profile__eyebrow,
+.client-profile__section-label {
+  display: block;
+  color: var(--color-brand-green);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.client-profile__header h1 {
+  margin-top: 10px;
+  color: var(--color-deep-emerald);
+  font-size: 38px;
+  font-weight: 650;
+  line-height: 1.08;
+}
+
+.client-profile__header p {
+  margin-top: 11px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.client-profile__identity {
+  display: grid;
+  grid-template-columns: 72px minmax(180px, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.client-profile__avatar {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--color-deep-emerald);
+  color: var(--color-soft-green);
+  font-size: 23px;
+  font-weight: 650;
+}
+
+.client-profile__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.client-profile__verified {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 23px;
+  height: 23px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-white);
+  border-radius: 50%;
+  background: var(--color-brand-green);
+  color: var(--color-white);
+}
+
+.client-profile__identity-copy {
+  min-width: 0;
+}
+
+.client-profile__identity-copy h2 {
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+  color: var(--color-deep-emerald);
+  font-size: 19px;
+  font-weight: 650;
+}
+
+.client-profile__identity-copy p {
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.client-profile__file-input {
+  display: none;
+}
+
+.client-profile__photo-button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 13px;
+  border: 1px solid var(--color-border-dark);
+  background: var(--color-white);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 650;
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.client-profile__photo-button:hover:not(:disabled) {
+  border-color: var(--color-brand-green);
+  background: var(--color-success-soft);
+  color: var(--color-deep-emerald);
+}
+
+.client-profile__photo-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.client-profile__photo-hint {
+  grid-column: 3;
+  margin-top: -13px;
+  color: var(--color-text-light);
+  font-size: 9px;
+  text-align: center;
+}
+
+.client-profile__form {
+  padding-top: 28px;
+}
+
+.client-profile__section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.client-profile__section-heading h2 {
+  margin-top: 6px;
+  color: var(--color-text);
+  font-size: 20px;
+  font-weight: 650;
+}
+
+.client-profile__required-note {
+  color: var(--color-text-light);
+  font-size: 10px;
+}
+
+.client-profile__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 19px 20px;
+}
+
+.client-profile__field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.client-profile__field > span b {
+  color: var(--color-brand-green);
+}
+
+.client-profile__field input,
+.client-profile__field textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-dark);
+  border-radius: var(--radius-sm);
+  outline-color: var(--color-brand-green);
+  background: var(--color-white);
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.client-profile__field textarea {
+  min-height: 108px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.client-profile__field input::placeholder,
+.client-profile__field textarea::placeholder {
+  color: var(--color-text-light);
+}
+
+.client-profile__field input:disabled,
+.client-profile__field textarea:disabled {
+  cursor: wait;
+  background: var(--color-ivory);
+  opacity: 0.7;
+}
+
+.client-profile__field--wide {
+  grid-column: 1 / -1;
+}
+
+.client-profile__field small {
+  align-self: flex-end;
+  margin-top: -3px;
+  color: var(--color-text-light);
+  font-size: 9px;
+  font-weight: 400;
+}
+
+.client-profile__section-heading--account {
+  margin: 32px 0 15px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border);
+}
+
+.client-profile__account-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.client-profile__readonly-field {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 5px 16px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.client-profile__readonly-field > span {
+  grid-column: 1 / -1;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.client-profile__readonly-field strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.client-profile__readonly-field small {
+  align-self: center;
+  color: var(--color-text-light);
+  font-size: 9px;
+  text-align: right;
+}
+
+.client-profile__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 25px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border);
+}
+
+.client-profile__save-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border: 1px solid var(--color-deep-emerald);
+  background: var(--color-deep-emerald);
+  color: var(--color-white);
+  font-size: 11px;
+  font-weight: 650;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.client-profile__save-button:hover:not(:disabled) {
+  border-color: var(--color-brand-green);
+  background: var(--color-brand-green);
+}
+
+.client-profile__save-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.client-profile__notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 11px 12px;
+  border: 1px solid var(--color-border);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.client-profile__notice svg {
+  flex-shrink: 0;
+}
+
+.client-profile__notice--error {
+  border-color: #efd0cc;
+  background: var(--color-error-soft);
+  color: var(--color-error);
+}
+
+.client-profile__notice--success {
+  border-color: #c9dfd0;
+  background: var(--color-success-soft);
+  color: var(--color-deep-emerald);
+}
+
+.client-profile__loading {
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.client-profile__loading svg,
+.client-profile__photo-button svg,
+.client-profile__save-button svg {
+  flex-shrink: 0;
+}
+
+@media (max-width: 760px) {
+  .client-profile__identity {
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    gap: 13px;
+  }
+
+  .client-profile__avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .client-profile__photo-hint {
+    grid-column: 3;
+  }
+}
+
+@media (max-width: 560px) {
+  .client-profile__header h1 {
+    font-size: 32px;
+  }
+
+  .client-profile__identity {
+    grid-template-columns: 60px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .client-profile__avatar {
+    width: 60px;
+    height: 60px;
+  }
+
+  .client-profile__photo-button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .client-profile__photo-hint {
+    grid-column: 1 / -1;
+    justify-self: start;
+    margin-top: -7px;
+    text-align: left;
+  }
+
+  .client-profile__grid,
+  .client-profile__account-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .client-profile__field--wide {
+    grid-column: auto;
+  }
+}

@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local environment and generated archives
+.env
+.env.*
+!.env.example
+*.zip
