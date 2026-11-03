@@ -1,6 +1,6 @@
-# NaijaFix
+# Proservora
 
-NaijaFix is a service marketplace for connecting customers with trusted
+Proservora is a service marketplace for connecting customers with trusted
 service providers across Nigeria.
 
 Customers can discover services, create requests, communicate with providers,
@@ -96,7 +96,7 @@ PORT=3000
 NODE_ENV=development
 DB_USER=postgres
 DB_HOST=localhost
-DB_NAME=naijafix
+DB_NAME=proservora
 DB_PASSWORD=your-password
 DB_PORT=5432
 JWT_SECRET=replace-with-a-long-random-secret
@@ -105,7 +105,7 @@ SMTP_HOST=smtp.example.com
 SMTP_PORT=465
 SMTP_USER=your-mailbox
 SMTP_PASS=your-mailbox-password
-EMAIL_FROM="NaijaFix <no-reply@example.com>"
+EMAIL_FROM="Proservora <no-reply@example.com>"
 ```
 
 Add the Cloudinary and application URL variables used by the deployment

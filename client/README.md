@@ -1,16 +1,35 @@
-# React + Vite
+# Proservora client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This directory contains the React/Vite customer and provider application for
+Proservora, a service marketplace connecting customers with service
+providers.
 
-Currently, two official plugins are available:
+## Development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+From this directory:
 
-## React Compiler
+```bash
+npm install
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The Vite development server prints the local URL when it starts.
 
-## Expanding the ESLint configuration
+## Available commands
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm run dev       # Start the development server
+npm run build     # Create a production build
+npm run preview   # Preview the production build
+npm run lint      # Run ESLint
+```
+
+## Application areas
+
+- Customer discovery, requests, bookings, payments, messaging, and reviews
+- Provider jobs, direct requests, bookings, earnings, payouts, and reviews
+- Shared authentication, notifications, layouts, and API services
+
+The API is maintained in the sibling [`server`](../server) directory. See the
+repository [README](../README.md) for the complete setup and environment
+configuration.
