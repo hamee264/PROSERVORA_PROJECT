@@ -70,7 +70,7 @@ const startServer = async () => {
 
     app.listen(PORT, () => {
       console.log(
-        `NaijaFix API running on port ${PORT} (${NODE_ENV})`,
+        `Proservora API running on port ${PORT} (${NODE_ENV})`,
       );
     });
   } catch (error) {

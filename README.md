@@ -128,6 +128,26 @@ npm run dev
 
 The Vite development server will print the local URL when it starts.
 
+## Render deployment
+
+The repository includes [`render.yaml`](./render.yaml) for deploying the core
+API to Render. Create a Blueprint from the repository and enter the values
+marked `sync: false` in the Render dashboard. Connect the service to a
+production PostgreSQL database and set `CLIENT_URL` to the deployed Netlify
+origin.
+
+Render uses:
+
+```text
+Root directory: server
+Build command: npm install
+Start command: node server.js
+Health check: /health
+```
+
+The Admin backend is intentionally not mounted in this core deployment while
+the Admin application is being rebuilt separately.
+
 ## Client commands
 
 ```bash

@@ -6,8 +6,8 @@ if (!JWT_SECRET) {
   throw new Error("JWT_SECRET is not configured");
 }
 
-const JWT_ISSUER = process.env.JWT_ISSUER || "naijafix-api";
-const JWT_AUDIENCE = process.env.JWT_AUDIENCE || "naijafix-client";
+const JWT_ISSUER = process.env.JWT_ISSUER || "proservora-api";
+const JWT_AUDIENCE = process.env.JWT_AUDIENCE || "proservora-client";
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "15m";
 

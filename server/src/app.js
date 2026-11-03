@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 
-const adminRoutes = require("./routes/adminRoutes");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const providerRoutes = require("./routes/providerRoutes");
@@ -113,15 +112,6 @@ app.use(
 // ============================================================
 
 app.use(express.json());
-
-// ============================================================
-// ADMIN
-// ============================================================
-
-app.use(
-  "/api/admin",
-  adminRoutes,
-);
 
 // ============================================================
 // CHAT ROUTES
@@ -262,7 +252,14 @@ app.use(
 app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "NaijaFix API is running",
+    message: "Proservora API is running",
+  });
+});
+
+app.get("/health", (req, res) => {
+  res.json({
+    success: true,
+    status: "healthy",
   });
 });
 
