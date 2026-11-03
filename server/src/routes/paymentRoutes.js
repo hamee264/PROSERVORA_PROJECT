@@ -1,12 +1,15 @@
 const express = require("express");
 
 const {
+  getMyPayments,
   initializePayment,
   verifyPayment,
-  releasePayment,
 } = require("../controllers/paymentController");
 
-const { authenticate, requireRole } = require("../middleware/authMiddleware");
+const {
+  authenticate,
+  requireRole,
+} = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -14,7 +17,14 @@ const router = express.Router();
 // CUSTOMER PAYMENTS
 // ============================================================
 
-// Initialize payment
+router.get(
+  "/",
+  authenticate,
+  requireRole("customer"),
+  getMyPayments,
+);
+
+// Initialize payment for an accepted booking
 router.post(
   "/initialize",
   authenticate,
@@ -22,10 +32,12 @@ router.post(
   initializePayment,
 );
 
-// Verify payment
-router.post("/verify", authenticate, requireRole("customer"), verifyPayment);
-
-// Release payment
-router.post("/release", authenticate, requireRole("customer"), releasePayment);
+// Verify Paystack payment
+router.post(
+  "/verify",
+  authenticate,
+  requireRole("customer"),
+  verifyPayment,
+);
 
 module.exports = router;

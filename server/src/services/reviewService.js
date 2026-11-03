@@ -209,6 +209,57 @@ const createReview = async (customerId, data) => {
   }
 };
 
+// ============================================================
+// GET PROVIDER REVIEWS
+// ============================================================
+
+const getProviderReviews = async (providerId) => {
+  const result = await pool.query(
+    `
+    SELECT
+      r.id,
+      r.booking_id,
+      r.customer_id,
+      r.provider_id,
+      r.rating,
+      r.review,
+      r.created_at,
+
+      p.first_name AS customer_first_name,
+      p.last_name AS customer_last_name,
+      p.username AS customer_username,
+      p.avatar_url AS customer_avatar_url,
+
+      s.title AS service_title,
+
+      o.title AS opportunity_title,
+      o.description AS opportunity_description
+
+    FROM reviews r
+
+    INNER JOIN bookings b
+      ON b.id = r.booking_id
+
+    INNER JOIN profiles p
+      ON p.user_id = r.customer_id
+
+    INNER JOIN services s
+      ON s.id = b.service_id
+
+    INNER JOIN opportunities o
+      ON o.id = b.opportunity_id
+
+    WHERE r.provider_id = $1
+
+    ORDER BY r.created_at DESC
+    `,
+    [providerId],
+  );
+
+  return result.rows;
+};
+
 module.exports = {
   createReview,
+  getProviderReviews,
 };

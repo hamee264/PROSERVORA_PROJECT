@@ -206,13 +206,51 @@ const addBankAccount = async (req, res) => {
   } catch (error) {
     console.error("Add bank account error:", error);
 
-    return res.status(500).json({
+    return res.status(error.statusCode || 502).json({
       success: false,
-      message: error.message || "Failed to add bank account",
+      message: error.message || "Unable to verify bank account",
     });
   }
 };
+const getMyBankAccount = async (req, res) => {
+  try {
+    const providerId = req.user.id;
 
+    const result = await pool.query(
+      `
+      SELECT
+        id,
+        provider_id,
+        bank_code,
+        bank_name,
+        account_number,
+        account_name,
+        is_verified,
+        is_default,
+        created_at,
+        updated_at
+      FROM provider_bank_accounts
+      WHERE provider_id = $1
+      ORDER BY is_default DESC, created_at DESC
+      LIMIT 1
+      `,
+      [providerId],
+    );
+
+    return res.status(200).json({
+      success: true,
+      bankAccount: result.rows[0] || null,
+    });
+  } catch (error) {
+    console.error("Get bank account error:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Failed to retrieve bank account",
+    });
+  }
+};
 module.exports = {
   addBankAccount,
+  getMyBankAccount,
 };

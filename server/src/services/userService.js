@@ -1,5 +1,11 @@
 const pool = require("../config/database");
+const {
 
+  uploadImage,
+
+  deleteImage,
+
+} = require("./cloudinaryService");
 const getCurrentUser = async (userId) => {
   const result = await pool.query(
     `
@@ -57,7 +63,6 @@ const updateProfile = async (userId, profileData) => {
     bio,
     country,
     city,
-    avatarUrl,
   } = profileData;
 
   const fields = [];
@@ -159,17 +164,6 @@ const updateProfile = async (userId, profileData) => {
     values.push(city.trim() || null);
   }
 
-  if (avatarUrl !== undefined) {
-    if (typeof avatarUrl !== "string") {
-      const error = new Error("Avatar URL must be a string");
-      error.statusCode = 400;
-      throw error;
-    }
-
-    fields.push(`avatar_url = $${parameterIndex++}`);
-    values.push(avatarUrl.trim() || null);
-  }
-
   if (fields.length === 0) {
     const error = new Error("No profile fields provided");
     error.statusCode = 400;
@@ -198,8 +192,158 @@ const updateProfile = async (userId, profileData) => {
 
   return result.rows[0];
 };
+const updateProfileImage = async (userId, file) => {
+  const client = await pool.connect();
+  let uploadedImage = null;
+  let oldMedia = [];
 
+  try {
+    await client.query("BEGIN");
+
+    const profileResult = await client.query(
+      `
+      SELECT avatar_url
+      FROM profiles
+      WHERE user_id = $1
+      FOR UPDATE
+      `,
+      [userId],
+    );
+
+    if (profileResult.rows.length === 0) {
+      const error = new Error("Profile not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const oldMediaResult = await client.query(
+      `
+      SELECT id, cloudinary_public_id
+      FROM media
+      WHERE entity_type = 'profile'
+        AND entity_id = $1
+      `,
+      [userId],
+    );
+
+    oldMedia = oldMediaResult.rows;
+
+    uploadedImage = await uploadImage(
+      file.buffer,
+      "naijafix/profiles",
+    );
+
+    await client.query(
+      `
+      UPDATE profiles
+      SET avatar_url = $1,
+          updated_at = NOW()
+      WHERE user_id = $2
+      `,
+      [uploadedImage.url, userId],
+    );
+
+    // Remove all previous profile media records.
+    await client.query(
+      `
+      DELETE FROM media
+      WHERE entity_type = 'profile'
+        AND entity_id = $1
+      `,
+      [userId],
+    );
+
+    const mediaResult = await client.query(
+      `
+      INSERT INTO media (
+        entity_type,
+        entity_id,
+        cloudinary_public_id,
+        url,
+        width,
+        height,
+        format,
+        bytes,
+        sort_order
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      RETURNING
+        id,
+        entity_type,
+        entity_id,
+        cloudinary_public_id,
+        url,
+        width,
+        height,
+        format,
+        bytes,
+        sort_order,
+        created_at
+      `,
+      [
+        "profile",
+        userId,
+        uploadedImage.publicId,
+        uploadedImage.url,
+        uploadedImage.width,
+        uploadedImage.height,
+        uploadedImage.format,
+        uploadedImage.bytes,
+        0,
+      ],
+    );
+
+    await client.query("COMMIT");
+
+    // Delete old Cloudinary assets only after the DB transaction succeeds.
+    for (const media of oldMedia) {
+      if (media.cloudinary_public_id) {
+        try {
+          await deleteImage(media.cloudinary_public_id);
+        } catch (cleanupError) {
+          console.error(
+            "Failed to delete old profile image from Cloudinary:",
+            cleanupError,
+          );
+        }
+      }
+    }
+
+    return {
+      profile: {
+        user_id: userId,
+        avatar_url: uploadedImage.url,
+      },
+      media: mediaResult.rows[0],
+    };
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      console.error(
+        "Profile image rollback error:",
+        rollbackError,
+      );
+    }
+
+    if (uploadedImage?.publicId) {
+      try {
+        await deleteImage(uploadedImage.publicId);
+      } catch (cleanupError) {
+        console.error(
+          "Failed to clean up uploaded profile image:",
+          cleanupError,
+        );
+      }
+    }
+
+    throw error;
+  } finally {
+    client.release();
+  }
+};
 module.exports = {
   getCurrentUser,
   updateProfile,
+  updateProfileImage
 };

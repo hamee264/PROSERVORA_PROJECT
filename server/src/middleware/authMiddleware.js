@@ -37,7 +37,6 @@ const authenticate = (req, res, next) => {
     });
 
     // Store authenticated user information
-    // so controllers can access req.user
     req.user = {
       id: decoded.sub,
       role: decoded.role,

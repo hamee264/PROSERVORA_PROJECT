@@ -12,8 +12,9 @@ const getAllCategories = async () => {
       name,
       slug,
       description,
-      icon_url,
-      is_active,
+icon_url,
+image_url,
+is_active,
       created_at
     FROM categories
     WHERE is_active = true
@@ -36,6 +37,7 @@ const getCategoryById = async (categoryId) => {
       name,
       slug,
       description,
+      image_url,
       icon_url,
       is_active,
       created_at

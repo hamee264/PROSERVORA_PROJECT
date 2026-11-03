@@ -17,253 +17,423 @@ const generateVerificationCode = () => {
 // ============================================================
 
 const hashVerificationCode = (code) => {
-  return crypto.createHash("sha256").update(code).digest("hex");
+  return crypto
+    .createHash("sha256")
+    .update(code)
+    .digest("hex");
 };
 
 // ============================================================
-// GENERATE VERIFICATION CODE FOR USER
+// GENERATE CODE FOR PENDING REGISTRATION
 // ============================================================
 
-const generateVerificationCodeForUser = async (userId) => {
+const generateVerificationCodeForPendingRegistration = async (
+  pendingRegistrationId,
+) => {
   const code = generateVerificationCode();
 
   const codeHash = hashVerificationCode(code);
 
-  const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
-
-  // Remove previous unused verification codes
-  await pool.query(
-    `
-    DELETE FROM email_verification_tokens
-    WHERE user_id = $1
-    AND used_at IS NULL
-    `,
-    [userId],
+  const expiresAt = new Date(
+    Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000,
   );
 
-  await pool.query(
+  const result = await pool.query(
     `
-    INSERT INTO email_verification_tokens (
-      user_id,
-      code_hash,
-      expires_at
-    )
-    VALUES ($1, $2, $3)
+    UPDATE pending_registrations
+    SET
+      verification_code_hash = $1,
+      verification_attempts = 0,
+      verification_expires_at = $2,
+      updated_at = NOW()
+    WHERE id = $3
+    RETURNING
+      id,
+      email,
+      first_name
     `,
-    [userId, codeHash, expiresAt],
+    [codeHash, expiresAt, pendingRegistrationId],
   );
 
-  return code;
+  if (result.rows.length === 0) {
+    const error = new Error(
+      "Pending registration not found",
+    );
+
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return {
+    code,
+    email: result.rows[0].email,
+    firstName: result.rows[0].first_name,
+  };
 };
 
 // ============================================================
-// VERIFY EMAIL CODE
+// VERIFY PENDING REGISTRATION
 // ============================================================
 
-const verifyEmailCode = async (email, code) => {
+const verifyPendingRegistration = async (
+  email,
+  code,
+) => {
   // ----------------------------------------------------------
-  // VALIDATE EMAIL
+  // VALIDATION
   // ----------------------------------------------------------
 
   if (!email) {
     const error = new Error("Email is required");
+
     error.statusCode = 400;
     throw error;
   }
 
-  // ----------------------------------------------------------
-  // VALIDATE CODE
-  // ----------------------------------------------------------
-
   if (!code) {
-    const error = new Error("Verification code is required");
+    const error = new Error(
+      "Verification code is required",
+    );
+
     error.statusCode = 400;
     throw error;
   }
 
   if (!/^\d{6}$/.test(code)) {
-    const error = new Error("Verification code must be 6 digits");
-
-    error.statusCode = 400;
-    throw error;
-  }
-
-  const normalizedEmail = email.trim().toLowerCase();
-
-  // ----------------------------------------------------------
-  // FIND USER
-  // ----------------------------------------------------------
-
-  const userResult = await pool.query(
-    `
-    SELECT
-      id,
-      is_email_verified
-    FROM users
-    WHERE email = $1
-    `,
-    [normalizedEmail],
-  );
-
-  if (userResult.rows.length === 0) {
-    const error = new Error("Invalid verification request");
-
-    error.statusCode = 400;
-    throw error;
-  }
-
-  const user = userResult.rows[0];
-
-  // ----------------------------------------------------------
-  // CHECK ALREADY VERIFIED
-  // ----------------------------------------------------------
-
-  if (user.is_email_verified) {
-    const error = new Error("Email is already verified");
-
-    error.statusCode = 400;
-    throw error;
-  }
-
-  // ----------------------------------------------------------
-  // FIND ACTIVE OTP
-  // ----------------------------------------------------------
-
-  const result = await pool.query(
-    `
-    SELECT
-      id,
-      code_hash,
-      expires_at,
-      attempts,
-      used_at
-    FROM email_verification_tokens
-    WHERE user_id = $1
-    AND used_at IS NULL
-    ORDER BY created_at DESC
-    LIMIT 1
-    `,
-    [user.id],
-  );
-
-  if (result.rows.length === 0) {
-    const error = new Error("No active verification code found");
-
-    error.statusCode = 400;
-    throw error;
-  }
-
-  const verification = result.rows[0];
-
-  // ----------------------------------------------------------
-  // CHECK EXPIRATION
-  // ----------------------------------------------------------
-
-  if (new Date(verification.expires_at) < new Date()) {
-    const error = new Error("Verification code has expired");
-
-    error.statusCode = 400;
-    throw error;
-  }
-
-  // ----------------------------------------------------------
-  // CHECK MAXIMUM ATTEMPTS
-  // ----------------------------------------------------------
-
-  if (verification.attempts >= MAX_ATTEMPTS) {
     const error = new Error(
-      "Too many verification attempts. Please request a new code",
+      "Verification code must be 6 digits",
     );
 
-    error.statusCode = 429;
+    error.statusCode = 400;
     throw error;
   }
 
-  // ----------------------------------------------------------
-  // HASH SUBMITTED CODE
-  // ----------------------------------------------------------
+  const normalizedEmail = email
+    .trim()
+    .toLowerCase();
 
-  const submittedHash = hashVerificationCode(code);
+  const client = await pool.connect();
 
-  // ----------------------------------------------------------
-  // COMPARE HASHES
-  // ----------------------------------------------------------
+  try {
+    await client.query("BEGIN");
 
-  const storedHash = Buffer.from(verification.code_hash, "hex");
+    // --------------------------------------------------------
+    // GET + LOCK PENDING REGISTRATION
+    // --------------------------------------------------------
 
-  const submittedHashBuffer = Buffer.from(submittedHash, "hex");
-
-  const isValid = crypto.timingSafeEqual(submittedHashBuffer, storedHash);
-
-  // ----------------------------------------------------------
-  // INVALID CODE
-  // ----------------------------------------------------------
-
-  if (!isValid) {
-    await pool.query(
+    const pendingResult = await client.query(
       `
-      UPDATE email_verification_tokens
-      SET attempts = attempts + 1
+      SELECT
+        id,
+        email,
+        first_name,
+        last_name,
+        password_hash,
+        role,
+        verification_code_hash,
+        verification_attempts,
+        verification_expires_at,
+        expires_at
+      FROM pending_registrations
+      WHERE email = $1
+      FOR UPDATE
+      `,
+      [normalizedEmail],
+    );
+
+    if (pendingResult.rows.length === 0) {
+      const error = new Error(
+        "Invalid or expired verification request",
+      );
+
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const pending = pendingResult.rows[0];
+
+    // --------------------------------------------------------
+    // CHECK REGISTRATION EXPIRATION
+    // --------------------------------------------------------
+
+    if (
+      !pending.expires_at ||
+      new Date(pending.expires_at) < new Date()
+    ) {
+      await client.query(
+        `
+        DELETE FROM pending_registrations
+        WHERE id = $1
+        `,
+        [pending.id],
+      );
+
+      const error = new Error(
+        "Registration has expired. Please sign up again.",
+      );
+
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // --------------------------------------------------------
+    // CHECK OTP EXISTS
+    // --------------------------------------------------------
+
+    if (!pending.verification_code_hash) {
+      const error = new Error(
+        "No active verification code found",
+      );
+
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // --------------------------------------------------------
+    // CHECK OTP EXPIRATION
+    // --------------------------------------------------------
+
+    if (
+      !pending.verification_expires_at ||
+      new Date(pending.verification_expires_at) <
+      new Date()
+    ) {
+      const error = new Error(
+        "Verification code has expired",
+      );
+
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // --------------------------------------------------------
+    // CHECK MAX ATTEMPTS
+    // --------------------------------------------------------
+
+    if (
+      pending.verification_attempts >= MAX_ATTEMPTS
+    ) {
+      const error = new Error(
+        "Too many verification attempts. Please request a new code.",
+      );
+
+      error.statusCode = 429;
+      throw error;
+    }
+
+    // --------------------------------------------------------
+    // HASH SUBMITTED OTP
+    // --------------------------------------------------------
+
+    const submittedHash =
+      hashVerificationCode(code);
+
+    const storedHash = Buffer.from(
+      pending.verification_code_hash,
+      "hex",
+    );
+
+    const submittedHashBuffer =
+      Buffer.from(
+        submittedHash,
+        "hex",
+      );
+
+    // --------------------------------------------------------
+    // COMPARE OTP
+    // --------------------------------------------------------
+
+    const isValid =
+      storedHash.length ===
+      submittedHashBuffer.length &&
+      crypto.timingSafeEqual(
+        submittedHashBuffer,
+        storedHash,
+      );
+
+    // --------------------------------------------------------
+    // INVALID OTP
+    // --------------------------------------------------------
+
+    if (!isValid) {
+      await client.query(
+        `
+        UPDATE pending_registrations
+        SET
+          verification_attempts =
+            verification_attempts + 1,
+          updated_at = NOW()
+        WHERE id = $1
+        `,
+        [pending.id],
+      );
+
+      const error = new Error(
+        "Invalid verification code",
+      );
+
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // --------------------------------------------------------
+    // CHECK WHETHER USER ALREADY EXISTS
+    // --------------------------------------------------------
+
+    const existingUserResult =
+      await client.query(
+        `
+        SELECT id
+        FROM users
+        WHERE email = $1
+        LIMIT 1
+        `,
+        [normalizedEmail],
+      );
+
+    if (existingUserResult.rows.length > 0) {
+      const error = new Error(
+        "An account with this email already exists",
+      );
+
+      error.statusCode = 409;
+      throw error;
+    }
+
+    // --------------------------------------------------------
+    // CREATE ACTUAL USER
+    // --------------------------------------------------------
+
+    const userResult = await client.query(
+      `
+      INSERT INTO users (
+        email,
+        password_hash,
+        role,
+        is_email_verified,
+        is_active
+      )
+      VALUES (
+        $1,
+        $2,
+        $3,
+        true,
+        true
+      )
+      RETURNING
+        id,
+        email,
+        role,
+        is_email_verified,
+        is_active,
+        created_at,
+        updated_at
+      `,
+      [
+        pending.email,
+        pending.password_hash,
+        pending.role,
+      ],
+    );
+
+    const user = userResult.rows[0];
+
+    // --------------------------------------------------------
+    // CREATE PROFILE
+    // --------------------------------------------------------
+
+    await client.query(
+      `
+      INSERT INTO profiles (
+        user_id,
+        first_name,
+        last_name
+      )
+      VALUES (
+        $1,
+        $2,
+        $3
+      )
+      `,
+      [
+        user.id,
+        pending.first_name,
+        pending.last_name,
+      ],
+    );
+
+    // --------------------------------------------------------
+    // CREATE PROVIDER PROFILE
+    // --------------------------------------------------------
+
+    if (pending.role === "provider") {
+      await client.query(
+        `
+        INSERT INTO provider_profiles (
+          user_id
+        )
+        VALUES ($1)
+        `,
+        [user.id],
+      );
+    }
+
+    // --------------------------------------------------------
+    // DELETE PENDING REGISTRATION
+    // --------------------------------------------------------
+
+    await client.query(
+      `
+      DELETE FROM pending_registrations
       WHERE id = $1
       `,
-      [verification.id],
+      [pending.id],
     );
 
-    const error = new Error("Invalid verification code");
+    // --------------------------------------------------------
+    // COMMIT
+    // --------------------------------------------------------
 
-    error.statusCode = 400;
+    await client.query("COMMIT");
+
+    return {
+      user,
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+
     throw error;
+  } finally {
+    client.release();
   }
-
-  // ----------------------------------------------------------
-  // MARK OTP AS USED
-  // ----------------------------------------------------------
-
-  await pool.query(
-    `
-    UPDATE email_verification_tokens
-    SET used_at = NOW()
-    WHERE id = $1
-    `,
-    [verification.id],
-  );
-
-  // ----------------------------------------------------------
-  // VERIFY USER EMAIL
-  // ----------------------------------------------------------
-
-  await pool.query(
-    `
-    UPDATE users
-    SET is_email_verified = true
-    WHERE id = $1
-    `,
-    [user.id],
-  );
-
-  return true;
 };
 
 // ============================================================
 // RESEND VERIFICATION CODE
 // ============================================================
 
-const resendVerificationCode = async (email) => {
+const resendVerificationCode = async (
+  email,
+) => {
   // ----------------------------------------------------------
-  // VALIDATE EMAIL
+  // VALIDATION
   // ----------------------------------------------------------
 
   if (!email) {
-    const error = new Error("Email is required");
+    const error = new Error(
+      "Email is required",
+    );
 
     error.statusCode = 400;
     throw error;
   }
 
-  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedEmail = email
+    .trim()
+    .toLowerCase();
 
   // ----------------------------------------------------------
-  // FIND USER
+  // FIND PENDING REGISTRATION
   // ----------------------------------------------------------
 
   const result = await pool.query(
@@ -271,40 +441,48 @@ const resendVerificationCode = async (email) => {
     SELECT
       id,
       email,
-      is_email_verified
-    FROM users
+      first_name,
+      expires_at
+    FROM pending_registrations
     WHERE email = $1
+    LIMIT 1
     `,
     [normalizedEmail],
   );
 
-  /*
-   * Don't reveal whether an account exists.
-   */
+  // Do not reveal whether a pending registration exists.
   if (result.rows.length === 0) {
     return null;
   }
 
-  const user = result.rows[0];
+  const pending = result.rows[0];
 
   // ----------------------------------------------------------
-  // CHECK IF ALREADY VERIFIED
+  // REMOVE EXPIRED REGISTRATION
   // ----------------------------------------------------------
 
-  if (user.is_email_verified) {
+  if (
+    !pending.expires_at ||
+    new Date(pending.expires_at) < new Date()
+  ) {
+    await pool.query(
+      `
+      DELETE FROM pending_registrations
+      WHERE id = $1
+      `,
+      [pending.id],
+    );
+
     return null;
   }
 
   // ----------------------------------------------------------
-  // GENERATE NEW CODE
+  // GENERATE NEW OTP
   // ----------------------------------------------------------
 
-  const code = await generateVerificationCodeForUser(user.id);
-
-  return {
-    email: user.email,
-    code,
-  };
+  return await generateVerificationCodeForPendingRegistration(
+    pending.id,
+  );
 };
 
 // ============================================================
@@ -312,7 +490,9 @@ const resendVerificationCode = async (email) => {
 // ============================================================
 
 module.exports = {
-  generateVerificationCodeForUser,
-  verifyEmailCode,
+  generateVerificationCode,
+  hashVerificationCode,
+  generateVerificationCodeForPendingRegistration,
+  verifyPendingRegistration,
   resendVerificationCode,
 };

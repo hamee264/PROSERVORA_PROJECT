@@ -1,5 +1,7 @@
 const express = require("express");
+const cors = require("cors");
 
+const adminRoutes = require("./routes/adminRoutes");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const providerRoutes = require("./routes/providerRoutes");
@@ -17,15 +19,92 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const disputeRoutes = require("./routes/disputeRoutes");
 
+const {
+  notFoundHandler,
+  errorHandler,
+} = require("./middleware/errorMiddleware");
+
 const app = express();
 
 // ============================================================
-// PAYSTACK PAYOUT WEBHOOK
+// CORS
 // ============================================================
+
+// Supports multiple frontend origins separated by commas.
+//
+// Example .env:
+// CLIENT_URL=http://localhost:5173,http://localhost:5174
+//
+// If CLIENT_URL is not provided, localhost:5173 is used.
+
+const allowedOrigins = String(
+  process.env.CLIENT_URL ||
+  "http://localhost:5173,http://localhost:5174",
+)
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow server-to-server requests and tools such as
+      // Postman that do not send an Origin header.
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Allow configured frontend origins.
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      const error = new Error(
+        "Origin not allowed by CORS",
+      );
+
+      error.statusCode = 403;
+
+      return callback(error);
+    },
+
+    credentials: true,
+  }),
+);
+
+// ============================================================
+// PAYSTACK WEBHOOKS
+// ============================================================
+//
+// IMPORTANT:
+// These webhook routes MUST be mounted BEFORE express.json().
+//
+// Paystack signature verification requires the exact raw
+// request body.
+//
+// Do NOT move these below app.use(express.json()).
+// ============================================================
+
+// ------------------------------------------------------------
+// PAYSTACK PAYMENT WEBHOOK
+// POST /api/webhooks/paystack
+// ------------------------------------------------------------
+
+app.use(
+  "/api/webhooks",
+  paymentWebhookRoutes,
+);
+
+// ------------------------------------------------------------
+// PAYSTACK PAYOUT WEBHOOK
+// POST /api/webhooks/paystack/payouts
+// ------------------------------------------------------------
 
 app.use(
   "/api/webhooks/paystack/payouts",
-  express.raw({ type: "application/json" }),
+  express.raw({
+    type: "application/json",
+  }),
   payoutWebhookRoutes,
 );
 
@@ -34,28 +113,147 @@ app.use(
 // ============================================================
 
 app.use(express.json());
-app.use("/api/chats", chatRoutes);
 
 // ============================================================
-// ROUTES
+// ADMIN
 // ============================================================
 
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/providers", providerRoutes);
-app.use("/api/categories", categoryRoutes);
-app.use("/api/services", serviceRoutes);
-app.use("/api/opportunities", opportunityRoutes);
-app.use("/api/bookings", bookingRoutes);
-app.use("/api/payments", paymentRoutes);
-app.use("/api/reviews", reviewRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.use("/api/disputes", disputeRoutes);
+app.use(
+  "/api/admin",
+  adminRoutes,
+);
 
-app.use("/api/webhooks", paymentWebhookRoutes);
+// ============================================================
+// CHAT ROUTES
+// ============================================================
 
-app.use("/api/provider/bank-accounts", bankAccountRoutes);
-app.use("/api/payouts", payoutRoutes);
+app.use(
+  "/api/chats",
+  chatRoutes,
+);
+
+// ============================================================
+// AUTHENTICATION
+// ============================================================
+
+app.use(
+  "/api/auth",
+  authRoutes,
+);
+
+// ============================================================
+// USERS
+// ============================================================
+
+app.use(
+  "/api/users",
+  userRoutes,
+);
+
+// ============================================================
+// PROVIDERS
+// ============================================================
+
+app.use(
+  "/api/providers",
+  providerRoutes,
+);
+
+// ============================================================
+// CATEGORIES
+// ============================================================
+
+app.use(
+  "/api/categories",
+  categoryRoutes,
+);
+
+// ============================================================
+// SERVICES
+// ============================================================
+
+app.use(
+  "/api/services",
+  serviceRoutes,
+);
+
+// ============================================================
+// OPPORTUNITIES
+// ============================================================
+
+app.use(
+  "/api/opportunities",
+  opportunityRoutes,
+);
+
+// ============================================================
+// BOOKINGS
+// ============================================================
+
+app.use(
+  "/api/bookings",
+  bookingRoutes,
+);
+
+// ============================================================
+// PAYMENTS
+// ============================================================
+
+app.use(
+  "/api/payments",
+  paymentRoutes,
+);
+
+// ============================================================
+// REVIEWS
+// ============================================================
+
+app.use(
+  "/api/reviews",
+  reviewRoutes,
+);
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+app.use(
+  "/api/notifications",
+  notificationRoutes,
+);
+
+// ============================================================
+// DISPUTES
+// ============================================================
+
+app.use(
+  "/api/disputes",
+  disputeRoutes,
+);
+
+// ============================================================
+// PROVIDER BANK ACCOUNTS
+// ============================================================
+
+app.use(
+  "/api/provider/bank-accounts",
+  bankAccountRoutes,
+);
+
+// Compatibility alias for clients that used the shorter bank-account path.
+app.use(
+  "/api/bank-accounts",
+  bankAccountRoutes,
+);
+
+// ============================================================
+// PAYOUTS
+// ============================================================
+
+app.use(
+  "/api/payouts",
+  payoutRoutes,
+);
 
 // ============================================================
 // HOME
@@ -67,5 +265,21 @@ app.get("/", (req, res) => {
     message: "NaijaFix API is running",
   });
 });
+
+// ============================================================
+// 404 HANDLER
+// ============================================================
+
+app.use(notFoundHandler);
+
+// ============================================================
+// CENTRAL ERROR HANDLER
+// ============================================================
+
+app.use(errorHandler);
+
+// ============================================================
+// EXPORT
+// ============================================================
 
 module.exports = app;

@@ -17,8 +17,8 @@ const register = async (req, res) => {
     res.status(201).json({
       success: true,
       message:
-        "Account created successfully. Please check your email for the verification code.",
-      user: result.user,
+        "Verification code sent. Please check your email to complete registration.",
+      email: result.email,
     });
   } catch (error) {
     console.error("Registration error:", error);
@@ -62,11 +62,13 @@ const verifyEmail = async (req, res) => {
   try {
     const { email, code } = req.body;
 
-    await authService.verifyEmail(email, code);
+    const result = await authService.verifyEmail(email, code);
 
     res.status(200).json({
       success: true,
-      message: "Email verified successfully",
+      message:
+        "Email verified successfully. Your account has been created.",
+      user: result.user,
     });
   } catch (error) {
     console.error("Email verification error:", error);
@@ -83,30 +85,25 @@ const verifyEmail = async (req, res) => {
 // ============================================================
 
 const forgotPassword = async (req, res) => {
-  console.log("FORGOT PASSWORD ROUTE HIT");
-
   try {
-    const result = await generatePasswordResetCode(req.body.email);
+    await generatePasswordResetCode(req.body.email);
 
-    const response = {
+    res.status(200).json({
       success: true,
       message:
         "If an account with that email exists, a password reset code has been sent",
-    };
-
-    // Development only.
-    // Remove this when email testing is complete.
-    if (result) {
-      response.resetCode = result.code;
-    }
-
-    res.status(200).json(response);
+    });
   } catch (error) {
-    console.error("Forgot password error:", error);
+    console.error("Forgot password error:", {
+      message: error.message,
+      statusCode: error.statusCode,
+    });
 
     res.status(error.statusCode || 500).json({
       success: false,
-      message: error.message || "Unable to process password reset request",
+      message:
+        error.message ||
+        "Unable to process password reset request",
     });
   }
 };
@@ -131,7 +128,9 @@ const verifyResetCode = async (req, res) => {
 
     res.status(error.statusCode || 500).json({
       success: false,
-      message: error.message || "Reset code verification failed",
+      message:
+        error.message ||
+        "Reset code verification failed",
     });
   }
 };
@@ -144,7 +143,11 @@ const resetPassword = async (req, res) => {
   try {
     const { email, code, newPassword } = req.body;
 
-    await resetPasswordService(email, code, newPassword);
+    await resetPasswordService(
+      email,
+      code,
+      newPassword,
+    );
 
     res.status(200).json({
       success: true,
@@ -155,10 +158,16 @@ const resetPassword = async (req, res) => {
 
     res.status(error.statusCode || 500).json({
       success: false,
-      message: error.message || "Password reset failed",
+      message:
+        error.message ||
+        "Password reset failed",
     });
   }
 };
+
+// ============================================================
+// RESEND VERIFICATION
+// ============================================================
 
 const resendVerification = async (req, res) => {
   try {
@@ -169,14 +178,16 @@ const resendVerification = async (req, res) => {
     res.status(200).json({
       success: true,
       message:
-        "If an unverified account with that email exists, a new verification code has been sent",
+        "If a pending registration with that email exists, a new verification code has been sent",
     });
   } catch (error) {
     console.error("Resend verification error:", error);
 
     res.status(error.statusCode || 500).json({
       success: false,
-      message: error.message || "Unable to resend verification code",
+      message:
+        error.message ||
+        "Unable to resend verification code",
     });
   }
 };

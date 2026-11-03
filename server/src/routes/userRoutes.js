@@ -2,10 +2,14 @@ const express = require("express");
 
 const {
   getCurrentUser,
+  updateCurrentUser,
+  updateProfileImage,
   providerTest,
 } = require("../controllers/userController");
 
 const { authenticate, requireRole } = require("../middleware/authMiddleware");
+
+const upload = require("../middleware/uploadMiddleware");
 
 const router = express.Router();
 
@@ -14,6 +18,15 @@ const router = express.Router();
 // ============================================================
 
 router.get("/me", authenticate, getCurrentUser);
+
+router.patch("/me", authenticate, updateCurrentUser);
+
+router.patch(
+  "/me/avatar",
+  authenticate,
+  upload.single("image"),
+  updateProfileImage,
+);
 
 // ============================================================
 // PROVIDER-ONLY

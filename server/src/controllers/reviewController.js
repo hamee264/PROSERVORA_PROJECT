@@ -23,6 +23,29 @@ const createReview = async (req, res) => {
   }
 };
 
+// ============================================================
+// GET PROVIDER REVIEWS
+// ============================================================
+
+const getProviderReviews = async (req, res) => {
+  try {
+    const reviews = await reviewService.getProviderReviews(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      reviews,
+    });
+  } catch (error) {
+    console.error("Get provider reviews error:", error);
+
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Unable to fetch reviews",
+    });
+  }
+};
+
 module.exports = {
   createReview,
+  getProviderReviews,
 };

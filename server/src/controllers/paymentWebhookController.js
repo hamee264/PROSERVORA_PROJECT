@@ -1,6 +1,9 @@
 const crypto = require("crypto");
+
 const pool = require("../config/database");
 const paymentService = require("../services/paymentService");
+const adminDisputeService = require("../services/adminDisputeService");
+const notificationService = require("../services/notificationService");
 
 // ============================================================
 // PAYSTACK WEBHOOK
@@ -8,9 +11,10 @@ const paymentService = require("../services/paymentService");
 
 const handlePaystackWebhook = async (req, res) => {
   try {
-    // ==========================================================
+    // ========================================================
     // VERIFY PAYSTACK SIGNATURE
-    // ==========================================================
+    // ========================================================
+
     const signature = req.headers["x-paystack-signature"];
 
     if (!signature) {
@@ -20,17 +24,67 @@ const handlePaystackWebhook = async (req, res) => {
       });
     }
 
+    // The webhook route uses express.raw(), so req.body should
+    // be the exact Buffer received from Paystack.
+    if (!Buffer.isBuffer(req.body)) {
+      console.error(
+        "Paystack webhook body is not a raw Buffer",
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "Invalid webhook body",
+      });
+    }
+
+    const secretKey = process.env.PAYSTACK_SECRET_KEY;
+
+    if (!secretKey) {
+      console.error(
+        "PAYSTACK_SECRET_KEY is not configured",
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "Payment webhook is not configured",
+      });
+    }
+
     const hash = crypto
-      .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY)
-      .update(JSON.stringify(req.body))
+      .createHmac("sha512", secretKey)
+      .update(req.body)
       .digest("hex");
 
-    const signatureBuffer = Buffer.from(signature, "hex");
-    const hashBuffer = Buffer.from(hash, "hex");
+    // ========================================================
+    // CONSTANT-TIME SIGNATURE COMPARISON
+    // ========================================================
+
+    let providedSignature;
+
+    try {
+      providedSignature = Buffer.from(
+        signature,
+        "hex",
+      );
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid Paystack signature",
+      });
+    }
+
+    const expectedSignature = Buffer.from(
+      hash,
+      "hex",
+    );
 
     if (
-      signatureBuffer.length !== hashBuffer.length ||
-      !crypto.timingSafeEqual(signatureBuffer, hashBuffer)
+      providedSignature.length !==
+      expectedSignature.length ||
+      !crypto.timingSafeEqual(
+        providedSignature,
+        expectedSignature,
+      )
     ) {
       return res.status(401).json({
         success: false,
@@ -38,17 +92,80 @@ const handlePaystackWebhook = async (req, res) => {
       });
     }
 
-    // ==========================================================
-    // GET EVENT
-    // ==========================================================
+    // ========================================================
+    // PARSE WEBHOOK BODY
+    // ========================================================
 
-    const event = req.body;
+    let event;
 
-    console.log("Paystack webhook received:", event.event);
+    try {
+      event = JSON.parse(
+        req.body.toString("utf8"),
+      );
+    } catch (error) {
+      console.error(
+        "Invalid Paystack webhook JSON:",
+        error,
+      );
 
-    // ==========================================================
-    // ONLY HANDLE SUCCESSFUL CHARGES
-    // ==========================================================
+      return res.status(400).json({
+        success: false,
+        message: "Invalid webhook payload",
+      });
+    }
+
+    // ========================================================
+    // BASIC EVENT VALIDATION
+    // ========================================================
+
+    if (
+      !event ||
+      typeof event !== "object" ||
+      !event.event
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid webhook event",
+      });
+    }
+
+    // ========================================================
+    // REFUND EVENTS
+    // ========================================================
+
+    if (
+      event.event === "refund.pending" ||
+      event.event === "refund.processing" ||
+      event.event === "refund.needs_attention" ||
+      event.event === "refund.processed" ||
+      event.event === "refund.failed"
+    ) {
+      const result =
+        await paymentService.processRefundWebhook(
+          event.event,
+          event.data,
+        );
+
+      if (
+        result.found &&
+        result.refundId
+      ) {
+        await adminDisputeService.handleRefundWebhookNotification(
+          result.refundId,
+          result.status,
+        );
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Refund webhook processed",
+        result,
+      });
+    }
+
+    // ========================================================
+    // NORMAL PAYMENT
+    // ========================================================
 
     if (event.event !== "charge.success") {
       return res.status(200).json({
@@ -57,57 +174,51 @@ const handlePaystackWebhook = async (req, res) => {
       });
     }
 
-    const paystackData = event.data;
+    const data = event.data;
 
-    // ==========================================================
-    // BASIC VALIDATION
-    // ==========================================================
-
-    if (!paystackData || !paystackData.reference) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid Paystack webhook payload",
+    if (
+      !data ||
+      !data.reference ||
+      data.status !== "success"
+    ) {
+      return res.status(200).json({
+        success: true,
+        message: "Payment was not successful",
       });
     }
 
-    const reference = paystackData.reference;
-
-    // ==========================================================
+    // ========================================================
     // FIND PAYMENT
-    // ==========================================================
+    // ========================================================
 
     const paymentResult = await pool.query(
       `
-      SELECT
-        id,
-        booking_id,
-        customer_id,
-        provider_id,
-        amount,
-        currency,
-        platform_fee,
-        processing_fee,
-        customer_total,
-        provider_amount,
-        payment_provider,
-        provider_transaction_id,
-        status,
-        paid_at,
-        released_at,
-        refunded_at
+        SELECT
+          id,
+          payment_provider,
+          customer_total,
+          currency,
+          status,
+          provider_transaction_id
 
-      FROM payments
+        FROM payments
 
-      WHERE provider_transaction_id = $1
+        WHERE provider_transaction_id = $1
 
-      LIMIT 1
+        LIMIT 1
       `,
-      [reference],
+      [data.reference],
     );
 
-    if (paymentResult.rows.length === 0) {
-      console.error("Paystack webhook payment not found:", reference);
+    if (!paymentResult.rows.length) {
+      console.error(
+        "Paystack webhook payment not found:",
+        data.reference,
+      );
 
+      // Returning 404 causes Paystack to retry the webhook.
+      // This is useful if the webhook arrives before the local
+      // payment record/reference has been persisted.
       return res.status(404).json({
         success: false,
         message: "Payment not found",
@@ -116,236 +227,161 @@ const handlePaystackWebhook = async (req, res) => {
 
     const payment = paymentResult.rows[0];
 
-    // ==========================================================
-    // ONLY PAYSTACK PAYMENTS
-    // ==========================================================
+    // ========================================================
+    // VALIDATE PAYMENT PROVIDER
+    // ========================================================
 
-    if (payment.payment_provider !== "paystack") {
+    if (
+      payment.payment_provider !== "paystack"
+    ) {
       return res.status(400).json({
         success: false,
         message: "Unsupported payment provider",
       });
     }
 
-    // ==========================================================
-    // CHECK STATUS
-    // ==========================================================
+    // ========================================================
+    // VALIDATE CURRENCY
+    // ========================================================
 
-    if (paystackData.status !== "success") {
-      return res.status(200).json({
-        success: true,
-        message: "Payment was not successful",
-      });
-    }
-
-    // ==========================================================
-    // CHECK CURRENCY
-    // ==========================================================
-
-    if (paystackData.currency !== payment.currency) {
-      console.error("Webhook currency mismatch:", {
-        paymentCurrency: payment.currency,
-        paystackCurrency: paystackData.currency,
-        paymentId: payment.id,
-      });
-
+    if (
+      String(data.currency).toUpperCase() !==
+      String(payment.currency).toUpperCase()
+    ) {
       return res.status(400).json({
         success: false,
         message: "Payment currency mismatch",
       });
     }
 
-    // ==========================================================
-    // CHECK AMOUNT
-    // ==========================================================
+    // ========================================================
+    // VALIDATE AMOUNT
+    // ========================================================
 
-    const expectedAmount = Math.round(Number(payment.customer_total) * 100);
+    const expectedAmount = Math.round(
+      Number(payment.customer_total) * 100,
+    );
 
-    const receivedAmount = Number(paystackData.amount);
+    const receivedAmount = Number(data.amount);
 
-    if (receivedAmount !== expectedAmount) {
-      console.error("Webhook amount mismatch:", {
-        paymentId: payment.id,
-        expectedAmount,
-        receivedAmount,
-      });
-
+    if (
+      !Number.isFinite(receivedAmount) ||
+      receivedAmount !== expectedAmount
+    ) {
       return res.status(400).json({
         success: false,
         message: "Payment amount mismatch",
       });
     }
 
-    // ==========================================================
-    // ALREADY PROCESSED
-    // ==========================================================
+    // ========================================================
+    // IDEMPOTENCY CHECK
+    // ========================================================
 
-    if (payment.status === "paid" || payment.status === "released") {
-      console.log("Paystack webhook already processed:", payment.id);
-
+    if (
+      payment.status === "paid" ||
+      payment.status === "released"
+    ) {
       return res.status(200).json({
         success: true,
         message: "Payment already processed",
       });
     }
 
-    // ==========================================================
-    // DATABASE TRANSACTION
-    // ==========================================================
+    // ========================================================
+    // PROCESS PAYMENT
+    // ========================================================
 
     const client = await pool.connect();
 
     try {
       await client.query("BEGIN");
 
-      // ========================================================
-      // LOCK PAYMENT
-      // ========================================================
-
-      const lockedPaymentResult = await client.query(
-        `
-        SELECT
-          id,
-          booking_id,
-          customer_id,
-          provider_id,
-          amount,
-          currency,
-          platform_fee,
-          processing_fee,
-          customer_total,
-          provider_amount,
-          payment_provider,
-          provider_transaction_id,
-          status,
-          paid_at,
-          released_at,
-          refunded_at
-
-        FROM payments
-
-        WHERE id = $1
-
-        FOR UPDATE
-        `,
-        [payment.id],
-      );
-
-      if (lockedPaymentResult.rows.length === 0) {
-        throw new Error("Payment no longer exists");
-      }
-
-      const lockedPayment = lockedPaymentResult.rows[0];
-
-      // ========================================================
-      // RACE CONDITION / DUPLICATE WEBHOOK
-      // ========================================================
-
-      if (
-        lockedPayment.status === "paid" ||
-        lockedPayment.status === "released"
-      ) {
-        await client.query("COMMIT");
-
-        return res.status(200).json({
-          success: true,
-          message: "Payment already processed",
-        });
-      }
-
-      // ========================================================
-      // MARK PAYMENT AS PAID
-      // ========================================================
-
-      const updatedPaymentResult = await client.query(
-        `
-        UPDATE payments
-
-        SET
-          status = 'paid',
-
-          paid_at = COALESCE($1, NOW()),
-
-          provider_transaction_id = $2,
-
-          updated_at = NOW()
-
-        WHERE id = $3
-
-        RETURNING
-          id,
-          booking_id,
-          customer_id,
-          provider_id,
-          amount,
-          currency,
-          platform_fee,
-          processing_fee,
-          customer_total,
-          provider_amount,
-          payment_provider,
-          provider_transaction_id,
-          status,
-          paid_at,
-          released_at,
-          refunded_at,
-          created_at,
-          updated_at
-        `,
-        [
-          paystackData.paid_at ? new Date(paystackData.paid_at) : null,
-
-          paystackData.reference,
-
-          lockedPayment.id,
-        ],
-      );
-
-      const updatedPayment = updatedPaymentResult.rows[0];
-
-      // ========================================================
-      // CREATE PAYMENT TRANSACTION
-      // ========================================================
-
-      const paymentTransaction = await paymentService.createPaymentTransaction(
-        updatedPayment,
-        paystackData.reference,
-        client,
-      );
-
-      // ========================================================
-      // CREDIT PROVIDER PENDING WALLET
-      // ========================================================
-
-      const walletResult = await paymentService.creditProviderPendingWallet(
-        updatedPayment.id,
-        client,
-      );
-
-      // ========================================================
-      // COMMIT
-      // ========================================================
+      const result =
+        await paymentService.processSuccessfulPayment(
+          payment.id,
+          data,
+          client,
+        );
 
       await client.query("COMMIT");
 
-      console.log(
-        "Paystack payment processed successfully:",
-        updatedPayment.id,
-      );
+      // ======================================================
+      // NOTIFICATIONS
+      // ======================================================
+
+      if (!result.alreadyProcessed) {
+        try {
+          await notificationService.createNotification({
+            userId:
+              result.payment.customer_id,
+
+            type: "payment_successful",
+
+            title: "Payment Successful",
+
+            message: `Your payment of ₦${Number(
+              result.payment.customer_total,
+            ).toLocaleString()} was successful.`,
+
+            actionUrl:
+              `/payments/${result.payment.id}`,
+          });
+
+          await notificationService.createNotification({
+            userId:
+              result.payment.provider_id,
+
+            type: "payment_received",
+
+            title: "Payment Received",
+
+            message: `₦${Number(
+              result.payment.provider_amount,
+            ).toLocaleString()} has been received and is being held until the job is completed.`,
+
+            actionUrl: "/wallet",
+          });
+        } catch (notificationError) {
+          // Notification failure must never cause the
+          // successful payment transaction to be rolled back.
+          console.error(
+            "Webhook notification error:",
+            notificationError,
+          );
+        }
+      }
+
+      // ======================================================
+      // RESPONSE
+      // ======================================================
 
       return res.status(200).json({
         success: true,
-        message: "Payment processed successfully",
-        payment: updatedPayment,
-        paymentTransaction,
-        wallet: walletResult.wallet || null,
-        walletTransaction: walletResult.transaction || null,
+
+        message:
+          result.alreadyProcessed
+            ? "Payment already processed"
+            : "Payment processed successfully",
+
+        payment: result.payment,
+
+        paymentTransaction:
+          result.paymentTransaction,
+
+        wallet: result.wallet,
+
+        walletTransaction:
+          result.walletTransaction,
       });
     } catch (error) {
       try {
         await client.query("ROLLBACK");
       } catch (rollbackError) {
-        console.error("Webhook rollback error:", rollbackError);
+        console.error(
+          "Webhook rollback error:",
+          rollbackError,
+        );
       }
 
       throw error;
@@ -353,9 +389,14 @@ const handlePaystackWebhook = async (req, res) => {
       client.release();
     }
   } catch (error) {
-    console.error("Paystack webhook error:", error);
+    console.error(
+      "Paystack webhook error:",
+      error,
+    );
 
-    return res.status(500).json({
+    return res.status(
+      error.statusCode || 500,
+    ).json({
       success: false,
       message: "Webhook processing failed",
     });

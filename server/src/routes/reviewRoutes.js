@@ -1,10 +1,19 @@
 const express = require("express");
 
-const { createReview } = require("../controllers/reviewController");
+const {
+  createReview,
+  getProviderReviews,
+} = require("../controllers/reviewController");
 
 const { authenticate, requireRole } = require("../middleware/authMiddleware");
 
 const router = express.Router();
+
+// ============================================================
+// PROVIDER - GET REVIEWS
+// ============================================================
+
+router.get("/me", authenticate, requireRole("provider"), getProviderReviews);
 
 // ============================================================
 // CUSTOMER - CREATE REVIEW

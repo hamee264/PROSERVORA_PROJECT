@@ -1,8 +1,22 @@
 const paymentService = require("../services/paymentService");
 
-// ============================================================
-// INITIALIZE PAYMENT
-// ============================================================
+const getMyPayments = async (req, res) => {
+  try {
+    const payments = await paymentService.getMyPayments(req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      payments,
+    });
+  } catch (error) {
+    console.error("Get customer payments error:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Unable to get payments",
+    });
+  }
+};
 
 const initializePayment = async (req, res) => {
   try {
@@ -38,10 +52,6 @@ const initializePayment = async (req, res) => {
   }
 };
 
-// ============================================================
-// VERIFY PAYMENT
-// ============================================================
-
 const verifyPayment = async (req, res) => {
   try {
     const { reference } = req.body;
@@ -53,7 +63,10 @@ const verifyPayment = async (req, res) => {
       });
     }
 
-    const result = await paymentService.verifyPayment(req.user.id, reference);
+    const result = await paymentService.verifyPayment(
+      req.user.id,
+      reference,
+    );
 
     return res.status(200).json({
       success: true,
@@ -72,52 +85,8 @@ const verifyPayment = async (req, res) => {
   }
 };
 
-// ============================================================
-// RELEASE PAYMENT
-// ============================================================
-
-const releasePayment = async (req, res) => {
-  try {
-    const { paymentId } = req.body;
-
-    if (!paymentId) {
-      return res.status(400).json({
-        success: false,
-        message: "Payment ID is required",
-      });
-    }
-
-    const result = await paymentService.releasePayment(req.user.id, paymentId);
-
-    return res.status(200).json({
-      success: true,
-
-      message: result.alreadyReleased
-        ? "Payment has already been released"
-        : "Payment released successfully",
-
-      payment: result.payment,
-
-      wallet: result.wallet,
-
-      walletTransaction: result.walletTransaction,
-    });
-  } catch (error) {
-    console.error("Release payment error:", error);
-
-    return res.status(error.statusCode || 500).json({
-      success: false,
-      message: error.message || "Unable to release payment",
-    });
-  }
-};
-
-// ============================================================
-// EXPORTS
-// ============================================================
-
 module.exports = {
+  getMyPayments,
   initializePayment,
   verifyPayment,
-  releasePayment,
 };

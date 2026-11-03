@@ -8,14 +8,19 @@ const createDispute = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
-    const { bookingId, reason, description } = req.body;
-
-    const dispute = await disputeService.createDispute({
+    const {
       bookingId,
-      userId,
       reason,
       description,
-    });
+    } = req.body;
+
+    const dispute =
+      await disputeService.createDispute({
+        bookingId,
+        userId,
+        reason,
+        description,
+      });
 
     res.status(201).json({
       success: true,
@@ -31,11 +36,16 @@ const createDispute = async (req, res, next) => {
 // GET MY DISPUTES
 // ============================================================
 
-const getMyDisputes = async (req, res, next) => {
+const getMyDisputes = async (
+  req,
+  res,
+  next,
+) => {
   try {
     const userId = req.user.id;
 
-    const disputes = await disputeService.getMyDisputes(userId);
+    const disputes =
+      await disputeService.getMyDisputes(userId);
 
     res.status(200).json({
       success: true,
@@ -50,22 +60,71 @@ const getMyDisputes = async (req, res, next) => {
 // GET SINGLE DISPUTE
 // ============================================================
 
-const getDispute = async (req, res, next) => {
+const getDispute = async (
+  req,
+  res,
+  next,
+) => {
   try {
     const userId = req.user.id;
     const { disputeId } = req.params;
 
     if (!disputeId) {
-      const error = new Error("Dispute ID is required");
+      const error = new Error(
+        "Dispute ID is required",
+      );
       error.statusCode = 400;
       throw error;
     }
 
-    const dispute = await disputeService.getDisputeForUser(disputeId, userId);
+    const dispute =
+      await disputeService.getDisputeForUser(
+        disputeId,
+        userId,
+      );
 
     res.status(200).json({
       success: true,
       dispute,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ============================================================
+// ADD DISPUTE MESSAGE
+// ============================================================
+
+const addDisputeMessage = async (
+  req,
+  res,
+  next,
+) => {
+  try {
+    const userId = req.user.id;
+    const { disputeId } = req.params;
+    const { message } = req.body;
+
+    if (!disputeId) {
+      const error = new Error(
+        "Dispute ID is required",
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const result =
+      await disputeService.addDisputeMessage({
+        disputeId,
+        userId,
+        message,
+      });
+
+    res.status(201).json({
+      success: true,
+      message: "Message added successfully",
+      disputeMessage: result,
     });
   } catch (error) {
     next(error);
@@ -80,4 +139,5 @@ module.exports = {
   createDispute,
   getMyDisputes,
   getDispute,
+  addDisputeMessage,
 };
