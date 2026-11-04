@@ -495,7 +495,7 @@ const acceptBooking = async (customerId, bookingId) => {
           b.status,
           customer.email AS customer_email,
           provider.email AS provider_email,
-          provider.first_name AS provider_first_name,
+          provider_profile.first_name AS provider_first_name,
 
           o.status AS opportunity_status,
           o.expires_at,
@@ -513,6 +513,8 @@ const acceptBooking = async (customerId, bookingId) => {
           ON customer.id = b.customer_id
         INNER JOIN users provider
           ON provider.id = b.provider_id
+        INNER JOIN profiles provider_profile
+          ON provider_profile.user_id = b.provider_id
 
         WHERE b.id = $1
           AND b.customer_id = $2
