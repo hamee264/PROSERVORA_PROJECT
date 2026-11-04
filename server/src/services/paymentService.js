@@ -269,8 +269,29 @@ const getMyPayments = async (customerId) => {
     INNER JOIN profiles provider
       ON provider.user_id = b.provider_id
 
-    LEFT JOIN payments p
-      ON p.booking_id = b.id
+    LEFT JOIN LATERAL (
+      SELECT
+        id,
+        amount,
+        currency,
+        platform_fee,
+        processing_fee,
+        customer_total,
+        provider_amount,
+        payment_provider,
+        provider_transaction_id,
+        status,
+        paid_at,
+        released_at,
+        refunded_at,
+        checkout_url,
+        created_at,
+        updated_at
+      FROM payments
+      WHERE booking_id = b.id
+      ORDER BY updated_at DESC NULLS LAST, created_at DESC
+      LIMIT 1
+    ) p ON true
 
     WHERE b.customer_id = $1
       AND (p.id IS NOT NULL OR b.status = 'accepted')

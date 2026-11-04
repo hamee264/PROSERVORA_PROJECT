@@ -5,7 +5,6 @@ import {
   BadgeCheck,
   CalendarDays,
   CheckCircle2,
-  Circle,
   MapPin,
   MessageCircle,
   Star,

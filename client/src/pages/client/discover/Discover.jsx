@@ -142,6 +142,7 @@ function Discover() {
     //
     // Do not call the backend.
     // Do not show the dropdown.
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (query.length < 2) {
       setSuggestions([]);
       setSuggestionsError("");
@@ -151,6 +152,7 @@ function Discover() {
 
       return;
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     let cancelled = false;
 

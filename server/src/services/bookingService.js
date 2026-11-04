@@ -373,8 +373,13 @@ const getMyBookings = async (userId, role) => {
       INNER JOIN services s
         ON s.id = b.service_id
 
-      LEFT JOIN payments pay
-        ON pay.booking_id = b.id
+      LEFT JOIN LATERAL (
+        SELECT status
+        FROM payments
+        WHERE booking_id = b.id
+        ORDER BY updated_at DESC NULLS LAST, created_at DESC
+        LIMIT 1
+      ) pay ON true
 
       INNER JOIN profiles p
         ON p.user_id = b.${isCustomer ? "provider_id" : "customer_id"

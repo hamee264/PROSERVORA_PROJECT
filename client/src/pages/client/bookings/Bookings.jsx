@@ -153,9 +153,19 @@ function Bookings() {
       }
     };
 
+    const refreshBookings = () => {
+      if (document.visibilityState === "hidden") return;
+      loadBookings();
+    };
+
     loadBookings();
+    window.addEventListener("focus", refreshBookings);
+    document.addEventListener("visibilitychange", refreshBookings);
+
     return () => {
       active = false;
+      window.removeEventListener("focus", refreshBookings);
+      document.removeEventListener("visibilitychange", refreshBookings);
     };
   }, []);
 

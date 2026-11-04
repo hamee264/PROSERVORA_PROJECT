@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext(null);
@@ -6,41 +7,36 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
+  const [{ user, token }, setAuthState] = useState(() => {
     const storedToken = localStorage.getItem("proservora_token");
     const storedUser = localStorage.getItem("proservora_user");
 
     if (storedToken && storedUser) {
       try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        return { token: storedToken, user: JSON.parse(storedUser) };
       } catch {
         localStorage.removeItem("proservora_token");
         localStorage.removeItem("proservora_user");
       }
     }
 
-    setLoading(false);
-  }, []);
+    return { token: null, user: null };
+  });
+
+  const loading = false;
 
   const login = ({ token: newToken, user: newUser }) => {
     localStorage.setItem("proservora_token", newToken);
     localStorage.setItem("proservora_user", JSON.stringify(newUser));
 
-    setToken(newToken);
-    setUser(newUser);
+    setAuthState({ token: newToken, user: newUser });
   };
 
   const logout = () => {
     localStorage.removeItem("proservora_token");
     localStorage.removeItem("proservora_user");
 
-    setToken(null);
-    setUser(null);
+    setAuthState({ token: null, user: null });
 
     navigate("/login");
   };
